@@ -82,11 +82,12 @@ func Test_baseOutput_writePruned(t *testing.T) {
 		modules []string
 	}
 	tests := []struct {
-		name    string
-		builder OutputBuilder
-		args    args
-		want    string
-		wantErr bool
+		name        string
+		builder     OutputBuilder
+		args        args
+		want        string
+		wantOutFile string
+		wantErr     bool
 	}{
 		{
 			name:    "basic",
@@ -99,6 +100,7 @@ func Test_baseOutput_writePruned(t *testing.T) {
 			want: `gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 `,
+			wantOutFile: filepath.Join(workDir, "go.sum"),
 		}, {
 			name:    "go.sum not exists",
 			builder: NewOutputBuilder().WorkDir(workDir).GoSumFile(filepath.Join(goSumDir, "foo")),
@@ -128,10 +130,11 @@ gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 			assert.Nil(t, err, "check")
 			defer os.RemoveAll(workDir)
 
-			err = tt.builder.Build().(*baseOutput).writePruned(tt.args.modules)
+			gotOutFile, err := tt.builder.Build().(*baseOutput).writePruned(tt.args.modules)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("baseOutput.writePruned() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			assert.Equal(t, tt.wantOutFile, gotOutFile, "baseOutput.writePruned() outFile")
 
 			if err == nil {
 				got, err := ioutil.ReadFile(filepath.Join(workDir, "go.sum"))

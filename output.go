@@ -16,7 +16,7 @@ import (
 //
 // Output はバイナリファイルから CREADTIS ファイルを書き出す機能を提供する.
 type Output interface {
-	Write() error
+	WriteFile() (hash string, err error)
 }
 
 // OutputBuilder builds CreaditsFile.
@@ -221,19 +221,22 @@ func (c *baseOutput) prune(modules []string) io.Reader {
 	return r
 }
 
-func (c *baseOutput) writePruned(modules []string) error {
-	outFile := filepath.Join(c.workDir, "go.sum")
+func (c *baseOutput) writePruned(modules []string) (outFile string, err error) {
+	outFile = filepath.Join(c.workDir, "go.sum")
 	out, err := os.Create(outFile)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer out.Close()
 	_, err = io.Copy(out, c.prune(modules))
-	return err
+	if err != nil {
+		return "", err
+	}
+	return outFile, err
 }
 
-func (c *baseOutput) Write() error {
-	return nil
+func (c *baseOutput) WriteFile() (hash string, err error) {
+	return
 }
 
 func newBaseOutput(b *baseOutputBuilder) *baseOutput {

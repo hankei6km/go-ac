@@ -1,6 +1,9 @@
 package ac
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 // ResetDir calls RemoveAll (if name is exists) and Mkdir.
 func ResetDir(name string, perm os.FileMode) error {
@@ -11,4 +14,10 @@ func ResetDir(name string, perm os.FileMode) error {
 		}
 	}
 	return os.Mkdir(name, perm)
+}
+
+// DistSuffix returns suffix  of d(ie. foo_bar_linxu_386 -> [linx 386])
+func DistSuffix(d string) []string {
+	s := strings.Split(d, "_")
+	return s[len(s)-2:]
 }

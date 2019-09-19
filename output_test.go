@@ -123,10 +123,7 @@ gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := os.Stat(workDir); err == nil {
-				os.RemoveAll(workDir)
-			}
-			err := os.Mkdir(workDir, os.ModePerm)
+			err := ResetDir(workDir, os.ModePerm)
 			assert.Nil(t, err, "check")
 			defer os.RemoveAll(workDir)
 

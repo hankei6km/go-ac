@@ -54,10 +54,7 @@ func Test_cliOutput_Flush(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := os.Stat(workDir); err == nil {
-				os.RemoveAll(workDir)
-			}
-			err := os.Mkdir(workDir, os.ModePerm)
+			err := ResetDir(workDir, os.ModePerm)
 			assert.Nil(t, err, "check")
 			defer os.RemoveAll(workDir)
 

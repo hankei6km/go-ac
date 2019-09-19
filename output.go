@@ -2,6 +2,7 @@ package ac
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -136,18 +137,34 @@ type baseOutput struct {
 
 	modulesCmd  string
 	modulesArgs []string
+
+	builder OutputBuilder // 今回はおそらくつかわない.
 }
 
 func (c *baseOutput) modules() ([]string, error) {
 	r, w := io.Pipe()
 	go func() {
+		var err error
+		errStream := &strings.Builder{}
+		defer func() {
+			errText := errStream.String()
+			switch {
+			case err != nil:
+				w.CloseWithError(err)
+			case errText != "":
+				w.CloseWithError(errors.New(errText))
+				// c.errStream
+			}
+			w.Close()
+		}()
 		cmd := exec.Command(c.modulesCmd, append(c.modulesArgs, c.binary)...) // 毎回appendはちょっともったいないか
 		cmd.Stdout = w
-		cmd.Stderr = c.errStream
-		if err := cmd.Start(); err != nil {
-			w.CloseWithError(err)
+		cmd.Stderr = errStream
+		err = cmd.Start()
+		if err != nil {
+			return
 		}
-		w.CloseWithError(cmd.Wait())
+		err = cmd.Wait()
 	}()
 	mods := []string{}
 	scanner := bufio.NewScanner(r)
@@ -160,7 +177,14 @@ func (c *baseOutput) modules() ([]string, error) {
 			}
 		}
 	}
-	return mods, scanner.Err()
+	err := scanner.Err()
+	switch {
+	case err != nil:
+		return nil, err
+	case len(mods) == 0:
+		return nil, errors.New("depndent not found")
+	}
+	return mods, nil
 }
 
 func (c *baseOutput) prune(modules []string) error {
@@ -174,12 +198,15 @@ func (c *baseOutput) Write() error {
 
 func newBaseOutput(b *baseOutputBuilder) *baseOutput {
 	return &baseOutput{
-		goSumFile:   b.goSumFile,
-		workDir:     b.workDir,
-		binary:      b.binary,
-		outStream:   b.outStream,
+		goSumFile: b.goSumFile,
+		workDir:   b.workDir,
+		binary:    b.binary,
+		outStream: b.outStream,
+
 		modulesCmd:  "go",
 		modulesArgs: []string{"version", "-m"},
+
+		builder: b.branch(),
 	}
 }
 

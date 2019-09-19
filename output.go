@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-// Output provides functions to write CREADITS files from the binary file.
+// Output provides functions to write the CREADITS file from the binary file.
 //
 // Output はバイナリファイルから CREADTIS ファイルを書き出す機能を提供する.
 type Output interface {
@@ -245,6 +245,7 @@ func newBaseOutput(b *baseOutputBuilder) *baseOutput {
 		workDir:   b.workDir,
 		binary:    b.binary,
 		outStream: b.outStream,
+		errStream: b.errStream,
 
 		modulesCmd:  "go",
 		modulesArgs: []string{"version", "-m"},

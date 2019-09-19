@@ -1,6 +1,7 @@
 package ac
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -66,6 +67,76 @@ func Test_baseOutput_modules(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("baseOutput.modules() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+		})
+	}
+}
+
+func Test_baseOutput_writePruned(t *testing.T) {
+	cwd, err := os.Getwd()
+	assert.Nil(t, err, "check")
+	testDir := filepath.Join(cwd, "testdata")
+	workDir := filepath.Join(testDir, "work_pruned")
+	goSumDir := filepath.Join(testDir, "goSum")
+	type args struct {
+		modules []string
+	}
+	tests := []struct {
+		name    string
+		builder OutputBuilder
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "basic",
+			builder: NewOutputBuilder().WorkDir(workDir).GoSumFile(filepath.Join(goSumDir, "go.sum")),
+			args: args{
+				modules: []string{
+					"gopkg.in/yaml.v2",
+				},
+			},
+			want: `gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
+gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+`,
+		}, {
+			name:    "go.sum not exists",
+			builder: NewOutputBuilder().WorkDir(workDir).GoSumFile(filepath.Join(goSumDir, "foo")),
+			args: args{
+				modules: []string{
+					"gopkg.in/yaml.v2",
+				},
+			},
+			wantErr: true,
+		}, {
+			name:    "missing workDir",
+			builder: NewOutputBuilder().WorkDir(filepath.Join(testDir, "foo")).GoSumFile(filepath.Join(goSumDir, "go.sum")),
+			args: args{
+				modules: []string{
+					"gopkg.in/yaml.v2",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := os.Stat(workDir); err == nil {
+				os.RemoveAll(workDir)
+			}
+			err := os.Mkdir(workDir, os.ModePerm)
+			assert.Nil(t, err, "check")
+			defer os.RemoveAll(workDir)
+
+			err = tt.builder.Build().(*baseOutput).writePruned(tt.args.modules)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("baseOutput.writePruned() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil {
+				got, err := ioutil.ReadFile(filepath.Join(workDir, "go.sum"))
+				assert.Nil(t, err, "check")
+				assert.Equal(t, tt.want, string(got), "pruned go.sum")
 			}
 		})
 	}

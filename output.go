@@ -3,9 +3,11 @@ package ac
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -187,9 +189,47 @@ func (c *baseOutput) modules() ([]string, error) {
 	return mods, nil
 }
 
-func (c *baseOutput) prune(modules []string) error {
-	// cmd:=os.
-	return nil
+func (c *baseOutput) prune(modules []string) io.Reader {
+	r, w := io.Pipe()
+
+	go func() {
+		var errClose error
+		defer func() {
+			w.CloseWithError(errClose)
+		}()
+
+		in, err := os.Open(c.goSumFile)
+		if err != nil {
+			errClose = err
+			return
+		}
+		defer in.Close()
+
+		scanner := bufio.NewScanner(in)
+		for scanner.Scan() {
+			l := scanner.Text()
+			t := strings.SplitN(l, " ", 2)[0]
+			for _, m := range modules {
+				if m == t {
+					fmt.Fprintln(w, l)
+				}
+			}
+		}
+		errClose = scanner.Err()
+	}()
+
+	return r
+}
+
+func (c *baseOutput) writePruned(modules []string) error {
+	outFile := filepath.Join(c.workDir, "go.sum")
+	out, err := os.Create(outFile)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, c.prune(modules))
+	return err
 }
 
 func (c *baseOutput) Write() error {

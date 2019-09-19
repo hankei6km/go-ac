@@ -16,7 +16,7 @@ import (
 //
 // Output はバイナリファイルから CREADTIS ファイルを書き出す機能を提供する.
 type Output interface {
-	WriteFile() (hash string, err error)
+	Flush() (hash []byte, err error)
 }
 
 // OutputBuilder builds CreaditsFile.
@@ -235,7 +235,7 @@ func (c *baseOutput) writePruned(modules []string) (outFile string, err error) {
 	return outFile, err
 }
 
-func (c *baseOutput) WriteFile() (hash string, err error) {
+func (c *baseOutput) Flush() (hash []byte, err error) {
 	return
 }
 

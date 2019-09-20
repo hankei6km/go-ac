@@ -1,5 +1,7 @@
 /.vscode/
 /dist/
+/testdata/work_*
+/testdata/outDir/
 tmp/
 temp/
 

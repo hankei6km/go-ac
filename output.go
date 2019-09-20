@@ -29,7 +29,7 @@ type OutputBuilder interface {
 	OutStream(io.Writer) OutputBuilder
 	ErrStream(io.Writer) OutputBuilder
 
-	CliOutput
+	ProgOutput
 
 	Branch() OutputBuilder
 	Build() Output
@@ -40,7 +40,7 @@ type baseOutputBuilder struct {
 	goSumFile string
 	workDir   string
 	binary    string
-	cli       string
+	prog      string
 	outStream io.Writer
 	errStream io.Writer
 }
@@ -90,11 +90,11 @@ func (b *baseOutputBuilder) ErrStream(errStream io.Writer) OutputBuilder {
 	return b.branch()
 }
 
-func (b *baseOutputBuilder) Cli(cli string) OutputBuilder {
+func (b *baseOutputBuilder) Prog(prog string) OutputBuilder {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	b.cli = cli
+	b.prog = prog
 
 	return b.branch()
 }
@@ -124,8 +124,8 @@ func (b *baseOutputBuilder) Build() Output {
 	defer b.mu.Unlock()
 
 	switch {
-	case b.cli != "":
-		return newCliOutput(b)
+	case b.prog != "":
+		return newProgOutput(b)
 	}
 	return newBaseOutput(b)
 }

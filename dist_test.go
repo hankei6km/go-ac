@@ -18,8 +18,8 @@ func Test_baseDist_Run(t *testing.T) {
 	testDir := filepath.Join(cwd, "testdata")
 	distDir := filepath.Join(testDir, "distDir")
 	outDir := filepath.Join(testDir, "outDir")
-	cliDir := filepath.Join(testDir, "work_cli")
-	cliFile := filepath.Join(cliDir, "fake.sh")
+	progDir := filepath.Join(testDir, "work_prog")
+	progFile := filepath.Join(progDir, "fake.sh")
 	workDir := filepath.Join(testDir, "work_dist")
 	goSumDir := filepath.Join(testDir, "goSum")
 	tests := []struct {
@@ -65,13 +65,13 @@ dd if=/dev/random count=5 status=none
 			assert.Nil(t, err, "check")
 			defer os.RemoveAll(outDir)
 
-			err = ResetDir(cliDir, os.ModePerm)
+			err = ResetDir(progDir, os.ModePerm)
 			assert.Nil(t, err, "check")
-			defer os.RemoveAll(cliDir)
+			defer os.RemoveAll(progDir)
 
 			err = func() error {
 				// ファイルを閉じないと実行できないので.
-				f, err := os.Create(cliFile)
+				f, err := os.Create(progFile)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -80,10 +80,10 @@ dd if=/dev/random count=5 status=none
 				return err
 			}()
 			assert.Nil(t, err, "check")
-			os.Chmod(cliFile, 0700)
+			os.Chmod(progFile, 0700)
 
 			d := tt.builder.
-				OutputBuilder(NewOutputBuilder().Cli(cliFile)).
+				OutputBuilder(NewOutputBuilder().Prog(progFile)).
 				Build()
 			err = d.Run()
 			if (err != nil) != tt.wantErr {

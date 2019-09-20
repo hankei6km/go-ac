@@ -20,9 +20,9 @@ func Test_OutputBuilder_Build(t *testing.T) {
 			builder: NewOutputBuilder(),
 			want:    &baseOutput{},
 		}, {
-			name:    "cli",
-			builder: NewOutputBuilder().Cli("foo"),
-			want:    &cliOutput{},
+			name:    "prog",
+			builder: NewOutputBuilder().Prog("foo"),
+			want:    &progOutput{},
 		},
 	}
 	for _, tt := range tests {

@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_cliOutput_Flush(t *testing.T) {
+func Test_progOutput_Flush(t *testing.T) {
 	cwd, err := os.Getwd()
 	assert.Nil(t, err, "check")
 	testDir := filepath.Join(cwd, "testdata")
 	binDir := filepath.Join(testDir, "binDir")
 	binFile := filepath.Join(binDir, "my_cmd")
-	cliFile := filepath.Join(testDir, "dummy.sh")
+	progFile := filepath.Join(testDir, "dummy.sh")
 	workDir := filepath.Join(testDir, "work_flush")
 	goSumDir := filepath.Join(testDir, "goSum")
 	tests := []struct {
@@ -32,7 +32,7 @@ func Test_cliOutput_Flush(t *testing.T) {
 				WorkDir(workDir).
 				Binary(binFile).
 				GoSumFile(filepath.Join(goSumDir, "go.sum")).
-				Cli(cliFile),
+				Prog(progFile),
 			want: "test: " + workDir + "\n",
 		}, {
 			name: "binary not exists",
@@ -40,7 +40,7 @@ func Test_cliOutput_Flush(t *testing.T) {
 				WorkDir(workDir).
 				Binary(filepath.Join(binDir, "foo")).
 				GoSumFile(filepath.Join(goSumDir, "go.sum")).
-				Cli(cliFile),
+				Prog(progFile),
 			wantErr: true,
 		}, {
 			name: "command not found",
@@ -48,7 +48,7 @@ func Test_cliOutput_Flush(t *testing.T) {
 				WorkDir(workDir).
 				Binary(binFile).
 				GoSumFile(filepath.Join(goSumDir, "go.sum")).
-				Cli(filepath.Join(testDir, "foo")),
+				Prog(filepath.Join(testDir, "foo")),
 			wantErr: true,
 		},
 	}
@@ -61,16 +61,16 @@ func Test_cliOutput_Flush(t *testing.T) {
 			got := &strings.Builder{}
 			gotHash, err := tt.builder.OutStream(got).Build().Flush()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("cliOutput.Flush() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("progOutput.Flush() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err == nil {
 				assert.Equal(t,
 					fmt.Sprintf("%x", sha256.Sum256([]byte(tt.want))),
 					fmt.Sprintf("%x", (gotHash)),
-					"cliOutput.Flush()",
+					"progOutput.Flush()",
 				)
-				assert.Equal(t, tt.want, got.String(), "cliOutput.Flush() outStream")
+				assert.Equal(t, tt.want, got.String(), "progOutput.Flush() outStream")
 			}
 		})
 	}

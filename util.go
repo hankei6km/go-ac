@@ -10,7 +10,7 @@ func ResetDir(name string, perm os.FileMode) error {
 	if _, err := os.Stat(name); err == nil {
 		err = os.RemoveAll(name)
 		if err != nil {
-			return err
+			return wrapf(err, "ResetDir() removing dir")
 		}
 	}
 	return os.Mkdir(name, perm)

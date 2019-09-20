@@ -2,7 +2,6 @@ package ac
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -148,18 +147,19 @@ func (c *baseOutput) modules() ([]string, error) {
 	go func() {
 		var err error
 		errStream := &strings.Builder{}
+		args := append(c.modulesArgs, c.binary)
 		defer func() {
 			errText := errStream.String()
 			switch {
 			case err != nil:
-				w.CloseWithError(err)
+				w.CloseWithError(wrapf(err, "execute args(%s, %x)", c.modulesCmd, args))
 			case errText != "":
-				w.CloseWithError(errors.New(errText))
-				// c.errStream
+				w.CloseWithError(wrapf(fmt.Errorf("%s", errText), "execute: args(%s, %x)", c.modulesCmd, args))
+				// io.Copy(c.errStream, strings.NewReader(errText))
 			}
 			w.Close()
 		}()
-		cmd := exec.Command(c.modulesCmd, append(c.modulesArgs, c.binary)...) // 毎回appendはちょっともったいないか
+		cmd := exec.Command(c.modulesCmd, args...)
 		cmd.Stdout = w
 		cmd.Stderr = errStream
 		err = cmd.Start()
@@ -182,9 +182,9 @@ func (c *baseOutput) modules() ([]string, error) {
 	err := scanner.Err()
 	switch {
 	case err != nil:
-		return nil, err
+		return nil, wrapf(err, "modules()")
 	case len(mods) == 0:
-		return nil, errors.New("depndent not found")
+		return nil, wrapf(fmt.Errorf("depenet module not found in '%s'", c.binary), "modules()")
 	}
 	return mods, nil
 }
@@ -195,7 +195,11 @@ func (c *baseOutput) prune(modules []string) io.Reader {
 	go func() {
 		var errClose error
 		defer func() {
-			w.CloseWithError(errClose)
+			if errClose != nil {
+				w.CloseWithError(wrapf(errClose, "prune go.sum"))
+				return
+			}
+			w.Close()
 		}()
 
 		in, err := os.Open(c.goSumFile)
@@ -225,14 +229,14 @@ func (c *baseOutput) writePruned(modules []string) (outFile string, err error) {
 	outFile = filepath.Join(c.workDir, "go.sum")
 	out, err := os.Create(outFile)
 	if err != nil {
-		return "", err
+		return "", wrapf(err, "creating pruned file")
 	}
 	defer out.Close()
 	_, err = io.Copy(out, c.prune(modules))
 	if err != nil {
-		return "", err
+		return "", wrapf(err, "writing pruned file")
 	}
-	return outFile, err
+	return outFile, nil
 }
 
 func (c *baseOutput) Flush() (hash []byte, err error) {

@@ -189,7 +189,7 @@ func (d *baseDist) output(distName string) error {
 	outFileName := filepath.Join(d.outDir, d.baseName+"_"+pOs+"_"+pArch)
 	out, err := os.Create(outFileName)
 	if err != nil {
-		return err
+		return wrapf(err, "output creating the output file")
 	}
 	defer out.Close()
 
@@ -214,11 +214,11 @@ func (d *baseDist) uniqByHash() (uniqed bool, err error) {
 	}
 	for i := 1; i < l; i++ {
 		if err := os.Remove(d.hash[i].outFileName); err != nil {
-			return false, err
+			return false, wrapf(err, "uniqByHash removeing files")
 		}
 	}
 	if err := os.Rename(t.outFileName, dstFileName); err != nil {
-		return false, err
+		return false, wrapf(err, "uniqByHash renaming file")
 	}
 	return true, nil
 }
@@ -226,23 +226,23 @@ func (d *baseDist) uniqByHash() (uniqed bool, err error) {
 func (d *baseDist) Run() error {
 	dirs, err := ioutil.ReadDir(d.distDir)
 	if err != nil {
-		return err
+		return wrapf(err, "Dist.Run")
 	}
 	for _, p := range dirs {
 		if p.IsDir() {
 			// go.sum を上書きしているので、並列で動かさないように注意.
 			if err := d.output(p.Name()); err != nil {
-				return err
+				return wrapf(err, "Dist.Run")
 			}
 		}
 	}
 	if len(d.hash) == 0 {
-		return fmt.Errorf("No %s file(s) has been created", d.baseName)
+		return wrapf(fmt.Errorf(" No %s file(s) has been created", d.baseName), "Dist.Run")
 	}
 	if d.uniq {
 		_, err := d.uniqByHash()
 		if err != nil {
-			return err
+			return wrapf(err, "Dist.Run")
 		}
 	}
 	return nil

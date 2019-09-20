@@ -20,10 +20,11 @@ type progOutput struct {
 func (c *progOutput) Flush() (hash []byte, err error) {
 	modules, err := c.modules()
 	if err != nil {
-		return nil, err
+		return nil, wrapf(err, "erorr in ProgOutput.Flush")
 	}
-	if _, err = c.writePruned(modules); err != nil {
-		return nil, err
+	_, err = c.writePruned(modules)
+	if err != nil {
+		return nil, wrapf(err, "erorr in ProgOutput.Flush")
 	}
 	h := sha256.New()
 	w := io.MultiWriter(c.outStream, h)
@@ -31,10 +32,10 @@ func (c *progOutput) Flush() (hash []byte, err error) {
 	cmd.Stdout = w
 	cmd.Stderr = c.errStream
 	if err := cmd.Start(); err != nil {
+		return nil, wrapf(err, "erorr in ProgOutput.Flush - start args(%s)", c.workDir)
 	}
-	err = cmd.Wait()
-	if err != nil {
-		return nil, err
+	if err := cmd.Wait(); err != nil {
+		return nil, wrapf(err, "erorr in ProgOutput.Flush - wait args(%s)", c.workDir)
 	}
 	return h.Sum(nil), nil
 }

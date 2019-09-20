@@ -42,6 +42,9 @@ type baseOutputBuilder struct {
 	prog      string
 	outStream io.Writer
 	errStream io.Writer
+
+	modulesCmd  string
+	modulesArgs []string
 }
 
 func (b *baseOutputBuilder) GoSumFile(goSumFile string) OutputBuilder {
@@ -251,8 +254,8 @@ func newBaseOutput(b *baseOutputBuilder) *baseOutput {
 		outStream: b.outStream,
 		errStream: b.errStream,
 
-		modulesCmd:  "go",
-		modulesArgs: []string{"version", "-m"},
+		modulesCmd:  b.modulesCmd,
+		modulesArgs: b.modulesArgs,
 
 		builder: b.branch(),
 	}
@@ -265,5 +268,8 @@ func NewOutputBuilder() OutputBuilder {
 		goSumFile: "go.sum",
 		outStream: os.Stdout,
 		errStream: os.Stderr,
+
+		modulesCmd:  "go",
+		modulesArgs: []string{"version", "-m"},
 	}
 }

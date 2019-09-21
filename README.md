@@ -24,7 +24,7 @@ input
       go.sum
 ```
 
-`$ mage credits` creates following CREDITS files(If `CREDITS_*` files are all the same, they are merged into the `CREDITS` file).
+output(If `CREDITS_*` files are all the same, they are merged into the `CREDITS` file).
 ```
   ▾ my-proj/
       CREDITS_linux_386

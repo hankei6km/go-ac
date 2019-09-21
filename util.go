@@ -1,3 +1,6 @@
+// Copyright (c) 2019 hankei6km
+// Licensed under the MIT License. See LICENSE in the project root.
+
 package ac
 
 import (

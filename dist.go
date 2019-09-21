@@ -20,7 +20,6 @@ type Dist interface {
 
 // DistBuilder builds Dist.
 type DistBuilder interface {
-	GoSumFile(string) DistBuilder
 	WorkDir(string) DistBuilder
 	DistDir(string) DistBuilder
 	OutDir(string) DistBuilder
@@ -37,27 +36,17 @@ type DistBuilder interface {
 }
 
 type baseDistBuilder struct {
-	mu        *sync.Mutex
-	goSumFile string
-	workDir   string
-	distDir   string
-	outDir    string
-	baseName  string
-	uniq      bool
+	mu       *sync.Mutex
+	workDir  string
+	distDir  string
+	outDir   string
+	baseName string
+	uniq     bool
 
 	outputBuilder OutputBuilder
 
 	outStream io.Writer
 	errStream io.Writer
-}
-
-func (b *baseDistBuilder) GoSumFile(goSumFile string) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.goSumFile = goSumFile
-
-	return b.branch()
 }
 
 func (b *baseDistBuilder) WorkDir(workDir string) DistBuilder {
@@ -162,12 +151,11 @@ type outputHash struct {
 }
 
 type baseDist struct {
-	goSumFile string
-	workDir   string
-	distDir   string
-	outDir    string
-	baseName  string
-	uniq      bool
+	workDir  string
+	distDir  string
+	outDir   string
+	baseName string
+	uniq     bool
 
 	outputBuilder OutputBuilder
 
@@ -250,15 +238,13 @@ func (d *baseDist) Run() error {
 
 func newBaseDist(b *baseDistBuilder) *baseDist {
 	return &baseDist{
-		goSumFile: b.goSumFile,
-		workDir:   b.workDir,
-		distDir:   b.distDir,
-		outDir:    b.outDir,
-		baseName:  b.baseName,
-		uniq:      b.uniq,
+		workDir:  b.workDir,
+		distDir:  b.distDir,
+		outDir:   b.outDir,
+		baseName: b.baseName,
+		uniq:     b.uniq,
 
 		outputBuilder: b.outputBuilder.Branch().
-			GoSumFile(b.goSumFile).
 			WorkDir(b.workDir),
 
 		outStream: b.outStream,
@@ -274,7 +260,6 @@ func newBaseDist(b *baseDistBuilder) *baseDist {
 func NewDistBuilder() DistBuilder {
 	return &baseDistBuilder{
 		mu:            &sync.Mutex{},
-		goSumFile:     "go.sum",
 		baseName:      "CREDITS",
 		uniq:          true,
 		outputBuilder: NewOutputBuilder(),

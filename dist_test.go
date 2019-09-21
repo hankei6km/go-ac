@@ -32,7 +32,6 @@ func Test_baseDist_Run(t *testing.T) {
 		{
 			name: "basic",
 			builder: NewDistBuilder().
-				GoSumFile(filepath.Join(goSumDir, "go.sum")).
 				DistDir(distDir).
 				OutDir(outDir).
 				WorkDir(workDir),
@@ -44,7 +43,6 @@ echo test
 		}, {
 			name: "multiple",
 			builder: NewDistBuilder().
-				GoSumFile(filepath.Join(goSumDir, "go.sum")).
 				DistDir(distDir).
 				OutDir(outDir).
 				WorkDir(workDir),
@@ -83,7 +81,11 @@ dd if=/dev/random count=5 status=none
 			os.Chmod(progFile, 0700)
 
 			d := tt.builder.
-				OutputBuilder(NewOutputBuilder().Prog(progFile)).
+				OutputBuilder(
+					NewOutputBuilder().
+						GoSumFile(filepath.Join(goSumDir, "go.sum")).
+						Prog(progFile),
+				).
 				Build()
 			err = d.Run()
 			if (err != nil) != tt.wantErr {

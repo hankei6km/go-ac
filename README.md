@@ -5,11 +5,11 @@ ac is helper library that creates CREDITS files(s) using `go version -m` and `go
 ## Requirement
 
 - Go 1.13
-- gocredits
+- [gocredits](https://github.com/Songmu/gocredits)
 
 ##  Ueage
 
-as is used mainly in magefile.go.
+Example of using ac in [magefile](https://github.com/magefile/mage).
 
 input
 ```
@@ -24,7 +24,7 @@ input
       go.sum
 ```
 
-output(If `CREDITS_*` files are all the same, they are merged into the `CREDITS` file)
+`$ mage credits` creates following CREDITS files(If `CREDITS_*` files are all the same, they are merged into the `CREDITS` file).
 ```
   ▾ my-proj/
       CREDITS_linux_386
@@ -32,7 +32,7 @@ output(If `CREDITS_*` files are all the same, they are merged into the `CREDITS`
       CREDITS_windows_amd64
 ```
 
-code(magefile.go)
+magefile.go
 ```go
 import "github.com/hankei6km/go-ac"
 
@@ -52,7 +52,7 @@ func Credits() error {
 
 	b := ac.NewOutputBuilder().
 		GoSumFile(filepath.Join(cwd, "go.sum")).
-		Prog("./gocredits")
+		Prog("gocredits")
 	d := ac.NewDistBuilder().
 		DistDir(filepath.Join(cwd, "dist")).
 		WorkDir(tmpDir).

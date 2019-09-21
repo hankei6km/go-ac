@@ -1,5 +1,7 @@
 # go-ac
 
+[![Build Status](https://travis-ci.org/hankei6km/go-ac.svg?branch=master)](https://travis-ci.org/hankei6km/go-ac)
+
 ac is helper library that creates CREDITS files(s) using `go version -m` and `gocredits`.
 
 ## Requirement
@@ -17,9 +19,9 @@ input
     ▾ dist/
       ▾ my_cmd_linux_386/
           my_cmd
-      ▾ my_cmd_linux_amd64
+      ▾ my_cmd_linux_amd64/
           my_cmd
-      ▾ my_cmd_windows_amd64
+      ▾ my_cmd_windows_amd64/
           my_cmd.exe
       go.sum
 ```

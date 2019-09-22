@@ -7,7 +7,7 @@ ac is helper library that creates CREDITS files(s) using `go version -m` and `go
 ## Requirement
 
 - Go 1.13
-- [gocredits](https://github.com/Songmu/gocredits)
+- [gocredits](https://github.com/Songmu/gocredits): if you want to use `gocredits` as extarnal program.
 
 ##  Ueage
 
@@ -53,8 +53,7 @@ func Credits() error {
 	defer os.RemoveAll(tmpDir)
 
 	b := ac.NewOutputBuilder().
-		GoSumFile(filepath.Join(cwd, "go.sum")).
-		Prog("gocredits")
+		GoSumFile(filepath.Join(cwd, "go.sum"))
 	d := ac.NewDistBuilder().
 		DistDir(filepath.Join(cwd, "dist")).
 		WorkDir(tmpDir).

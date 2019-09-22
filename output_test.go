@@ -21,6 +21,10 @@ func Test_OutputBuilder_Build(t *testing.T) {
 		{
 			name:    "basic",
 			builder: NewOutputBuilder(),
+			want:    &funcOutput{},
+		}, {
+			name:    "base",
+			builder: NewOutputBuilder().runFunc(nil),
 			want:    &baseOutput{},
 		}, {
 			name:    "prog",
@@ -64,7 +68,7 @@ func Test_baseOutput_modules(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := tt.builder.Build()
+			c := tt.builder.runFunc(nil).Build() // build baseOutput force.
 			got, err := c.(*baseOutput).modules()
 			assert.Equal(t, tt.want, got, "baseOutput.modules()")
 			if (err != nil) != tt.wantErr {
@@ -130,7 +134,7 @@ gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 			assert.Nil(t, err, "check")
 			defer os.RemoveAll(workDir)
 
-			gotOutFile, err := tt.builder.Build().(*baseOutput).writePruned(tt.args.modules)
+			gotOutFile, err := tt.builder.runFunc(nil).Build().(*baseOutput).writePruned(tt.args.modules) // build baseOutput force.
 			if (err != nil) != tt.wantErr {
 				t.Errorf("baseOutput.writePruned() error = %v, wantErr %v", err, tt.wantErr)
 			}

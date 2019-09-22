@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/Songmu/gocredits"
 )
 
 // Output provides functions to write the CREADITS file from the binary file.
@@ -32,19 +34,21 @@ type OutputBuilder interface {
 	ErrStream(io.Writer) OutputBuilder
 
 	ProgOutput
+	FuncOutputBuilder
 
 	Branch() OutputBuilder
 	Build() Output
 }
 
 type baseOutputBuilder struct {
-	mu        *sync.Mutex
-	goSumFile string
-	workDir   string
-	binary    string
-	prog      string
-	outStream io.Writer
-	errStream io.Writer
+	mu          *sync.Mutex
+	goSumFile   string
+	workDir     string
+	binary      string
+	prog        string
+	runFuncIntl runFuncType
+	outStream   io.Writer
+	errStream   io.Writer
 
 	modulesCmd  string
 	modulesArgs []string
@@ -104,6 +108,15 @@ func (b *baseOutputBuilder) Prog(prog string) OutputBuilder {
 	return b.branch()
 }
 
+func (b *baseOutputBuilder) runFunc(runFunc runFuncType) OutputBuilder {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.runFuncIntl = runFunc
+
+	return b.branch()
+}
+
 func (b *baseOutputBuilder) branch() OutputBuilder {
 	mu := b.mu
 	// mu.Lock() 呼び出し元で lock されているときだけ実行するように注意.
@@ -131,6 +144,8 @@ func (b *baseOutputBuilder) Build() Output {
 	switch {
 	case b.prog != "":
 		return newProgOutput(b)
+	case b.runFuncIntl != nil:
+		return newEmbedOutput(b)
 	}
 	return newBaseOutput(b)
 }
@@ -267,10 +282,11 @@ func newBaseOutput(b *baseOutputBuilder) *baseOutput {
 // NewOutputBuilder returns the instance of OutputBuilder.
 func NewOutputBuilder() OutputBuilder {
 	return &baseOutputBuilder{
-		mu:        &sync.Mutex{},
-		goSumFile: "go.sum",
-		outStream: os.Stdout,
-		errStream: os.Stderr,
+		mu:          &sync.Mutex{},
+		goSumFile:   "go.sum",
+		runFuncIntl: gocredits.Run,
+		outStream:   os.Stdout,
+		errStream:   os.Stderr,
 
 		modulesCmd:  "go",
 		modulesArgs: []string{"version", "-m"},

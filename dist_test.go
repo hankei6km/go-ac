@@ -15,7 +15,80 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_baseDist_Run(t *testing.T) {
+func Test_baseDist_Run_With_Func(t *testing.T) {
+	cwd, err := os.Getwd()
+	assert.Nil(t, err, "check")
+	testDir := filepath.Join(cwd, "testdata")
+	distDir := filepath.Join(testDir, "distDir")
+	outDir := filepath.Join(testDir, "outDir")
+	workDir := filepath.Join(testDir, "work_dist")
+	goSumDir := filepath.Join(testDir, "goSum")
+	tests := []struct {
+		name           string
+		builder        DistBuilder
+		fakeRunFunc    runFuncType
+		wantNumFOutput int
+		wantErr        bool
+	}{
+		{
+			name: "basic",
+			builder: NewDistBuilder().
+				DistDir(distDir).
+				OutDir(outDir).
+				WorkDir(workDir),
+			fakeRunFunc: func(argv []string, outStream, errStream io.Writer) error {
+				// constant output.
+				_, err := io.Copy(outStream, strings.NewReader("test"))
+				return err
+			},
+			wantNumFOutput: 1,
+		}, {
+			name: "multiple",
+			builder: NewDistBuilder().
+				DistDir(distDir).
+				OutDir(outDir).
+				WorkDir(workDir),
+			fakeRunFunc: func(argv []string, outStream, errStream io.Writer) error {
+				// different output.
+				f, err := os.Open("/dev/random")
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = io.CopyN(outStream, f, 2048*5)
+				return err
+			},
+			wantNumFOutput: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ResetDir(workDir, os.ModePerm)
+			assert.Nil(t, err, "check")
+			defer os.RemoveAll(workDir)
+
+			err = ResetDir(outDir, os.ModePerm)
+			assert.Nil(t, err, "check")
+			defer os.RemoveAll(outDir)
+
+			d := tt.builder.
+				OutputBuilder(
+					NewOutputBuilder().
+						GoSumFile(filepath.Join(goSumDir, "go.sum")).
+						runFunc(tt.fakeRunFunc),
+				).
+				Build()
+			err = d.Run()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("baseDist.Run() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			files, err := ioutil.ReadDir(outDir)
+			assert.Nil(t, err, "check")
+			assert.Equal(t, len(files), tt.wantNumFOutput, "Num of output files")
+		})
+	}
+}
+func Test_baseDist_Run_With_Prog(t *testing.T) {
 	cwd, err := os.Getwd()
 	assert.Nil(t, err, "check")
 	testDir := filepath.Join(cwd, "testdata")

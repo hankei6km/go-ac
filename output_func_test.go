@@ -1,0 +1,76 @@
+// Copyright (c) 2019 hankei6km
+// Licensed under the MIT License. See LICENSE in the project root.
+
+package ac
+
+import (
+	"crypto/sha256"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func Test_embedOutput_Flush(t *testing.T) {
+	cwd, err := os.Getwd()
+	assert.Nil(t, err, "check")
+	testDir := filepath.Join(cwd, "testdata")
+	binDir := filepath.Join(testDir, "binDir")
+	binFile := filepath.Join(binDir, "my_cmd")
+	runFunc := func(argv []string, outStream, errStream io.Writer) error {
+		_, err := io.Copy(outStream, strings.NewReader("test: "+argv[0]+"\n"))
+		return err
+	}
+	workDir := filepath.Join(testDir, "work_flush")
+	goSumDir := filepath.Join(testDir, "goSum")
+	tests := []struct {
+		name    string
+		builder OutputBuilder
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "basic",
+			builder: NewOutputBuilder().
+				WorkDir(workDir).
+				Binary(binFile).
+				GoSumFile(filepath.Join(goSumDir, "go.sum")).
+				runFunc(runFunc),
+			want: "test: " + workDir + "\n",
+		}, {
+			name: "binary not exists",
+			builder: NewOutputBuilder().
+				WorkDir(workDir).
+				Binary(filepath.Join(binDir, "foo")).
+				GoSumFile(filepath.Join(goSumDir, "go.sum")).
+				runFunc(runFunc),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ResetDir(workDir, os.ModePerm)
+			assert.Nil(t, err, "check")
+			defer os.RemoveAll(workDir)
+
+			got := &strings.Builder{}
+			gotHash, err := tt.builder.OutStream(got).Build().Flush()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("funcOutput.Flush() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err == nil {
+				assert.Equal(t,
+					fmt.Sprintf("%x", sha256.Sum256([]byte(tt.want))),
+					fmt.Sprintf("%x", (gotHash)),
+					"funcOutput.Flush()",
+				)
+				assert.Equal(t, tt.want, got.String(), "funcOutput.Flush() outStream")
+			}
+		})
+	}
+}

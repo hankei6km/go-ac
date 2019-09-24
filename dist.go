@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 // Dist provide functions to write some CREDITS files for each binary files
@@ -39,7 +38,6 @@ type DistBuilder interface {
 }
 
 type baseDistBuilder struct {
-	mu       *sync.Mutex
 	workDir  string
 	distDir  string
 	outDir   string
@@ -53,94 +51,58 @@ type baseDistBuilder struct {
 }
 
 func (b *baseDistBuilder) WorkDir(workDir string) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.workDir = workDir
-
-	return b.branch()
+	return bb
 }
 
 func (b *baseDistBuilder) DistDir(distDir string) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.distDir = distDir
-
-	return b.branch()
+	return bb
 }
 
 func (b *baseDistBuilder) OutDir(outDir string) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.outDir = outDir
-
-	return b.branch()
+	return bb
 }
 
 func (b *baseDistBuilder) BaseName(baseName string) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.baseName = baseName
-
-	return b.branch()
+	return bb
 }
 
 func (b *baseDistBuilder) Uniq(uniq bool) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.uniq = uniq
-
-	return b.branch()
+	return bb
 }
 
 func (b *baseDistBuilder) OutputBuilder(outputBuilder OutputBuilder) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.outputBuilder = outputBuilder
-
-	return b.branch()
+	bb := b.branch()
+	b.outputBuilder = outputBuilder.Branch()
+	return bb
 }
 
 func (b *baseDistBuilder) OutStream(outStream io.Writer) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.outStream = outStream
-
-	return b.branch()
+	return bb
 }
 
 func (b *baseDistBuilder) ErrStream(errStream io.Writer) DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
+	bb := b.branch()
 	b.errStream = errStream
-
-	return b.branch()
+	return bb
 }
 
-func (b *baseDistBuilder) branch() DistBuilder {
-	mu := b.mu
-	// mu.Lock() 呼び出し元で lock されているときだけ実行するように注意.
-	// defer mu.Unlock()
-
-	b.mu = nil
-	ret := *b // とりあえず
-	ret.mu = &sync.Mutex{}
-
-	b.mu = mu
-	return &ret
+func (b *baseDistBuilder) branch() *baseDistBuilder {
+	return &(*b) // とりあえず
 }
 
 func (b *baseDistBuilder) Branch() DistBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	return b.branch()
 }
 
@@ -262,7 +224,6 @@ func newBaseDist(b *baseDistBuilder) *baseDist {
 // NewDistBuilder returns the instance of DistBuilder.
 func NewDistBuilder() DistBuilder {
 	return &baseDistBuilder{
-		mu:            &sync.Mutex{},
 		baseName:      "CREDITS",
 		uniq:          true,
 		outputBuilder: NewOutputBuilder(),

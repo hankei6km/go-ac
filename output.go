@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/Songmu/gocredits"
 )
@@ -41,7 +40,6 @@ type OutputBuilder interface {
 }
 
 type baseOutputBuilder struct {
-	mu          *sync.Mutex
 	goSumFile   string
 	workDir     string
 	binary      string
@@ -55,92 +53,56 @@ type baseOutputBuilder struct {
 }
 
 func (b *baseOutputBuilder) GoSumFile(goSumFile string) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.goSumFile = goSumFile
-
-	return b.branch()
+	bb := b.branch()
+	bb.goSumFile = goSumFile
+	return bb
 }
 
 func (b *baseOutputBuilder) WorkDir(workDir string) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.workDir = workDir
-
-	return b.branch()
+	bb := b.branch()
+	bb.workDir = workDir
+	return bb
 }
 
 func (b *baseOutputBuilder) Binary(binary string) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.binary = binary
-
-	return b.branch()
+	bb := b.branch()
+	bb.binary = binary
+	return bb
 }
 
 func (b *baseOutputBuilder) OutStream(outStream io.Writer) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.outStream = outStream
-
-	return b.branch()
+	bb := b.branch()
+	bb.outStream = outStream
+	return bb
 }
 
 func (b *baseOutputBuilder) ErrStream(errStream io.Writer) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.errStream = errStream
-
-	return b.branch()
+	bb := b.branch()
+	bb.errStream = errStream
+	return bb
 }
 
 func (b *baseOutputBuilder) Prog(prog string) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.prog = prog
-
-	return b.branch()
+	bb := b.branch()
+	bb.prog = prog
+	return bb
 }
 
 func (b *baseOutputBuilder) runFunc(runFunc runFuncType) OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	b.runFuncIntl = runFunc
-
-	return b.branch()
+	bb := b.branch()
+	bb.runFuncIntl = runFunc
+	return bb
 }
 
-func (b *baseOutputBuilder) branch() OutputBuilder {
-	mu := b.mu
-	// mu.Lock() 呼び出し元で lock されているときだけ実行するように注意.
-	// defer mu.Unlock()
-
-	b.mu = nil
-	ret := *b // とりあえず
-	ret.mu = &sync.Mutex{}
-
-	b.mu = mu
-	return &ret
+func (b *baseOutputBuilder) branch() *baseOutputBuilder {
+	return &(*b) // とりあえず
 }
 
 func (b *baseOutputBuilder) Branch() OutputBuilder {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	return b.branch()
 }
 
 func (b *baseOutputBuilder) Build() Output {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	switch {
 	case b.prog != "":
 		return newProgOutput(b)
@@ -282,7 +244,6 @@ func newBaseOutput(b *baseOutputBuilder) *baseOutput {
 // NewOutputBuilder returns the instance of OutputBuilder.
 func NewOutputBuilder() OutputBuilder {
 	return &baseOutputBuilder{
-		mu:          &sync.Mutex{},
 		goSumFile:   "go.sum",
 		runFuncIntl: gocredits.Run,
 		outStream:   os.Stdout,

@@ -110,7 +110,7 @@ func TestReplaceItem(t *testing.T) {
 			name: "basic",
 			args: args{
 				r: [][]string{
-					[]string{"linx", "Linux"},
+					[]string{"linux", "Linux"},
 					[]string{"windows", "Windows"},
 				},
 				s: "windows",
@@ -120,7 +120,7 @@ func TestReplaceItem(t *testing.T) {
 			name: "no match",
 			args: args{
 				r: [][]string{
-					[]string{"linx", "Linux"},
+					[]string{"linux", "Linux"},
 					[]string{"windows", "Windows"},
 				},
 				s: "aix",

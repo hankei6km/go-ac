@@ -29,9 +29,9 @@ input
 output(If `CREDITS_*` files are all the same, they are merged into the `CREDITS` file).
 ```
   ▾ my-proj/
-      CREDITS_linux_386
-      CREDITS_linux_amd64
-      CREDITS_windows_amd64
+      CREDITS_Linux_i386
+      CREDITS_Linux_amd64
+      CREDITS_Windows_amd64
 ```
 
 magefile.go
@@ -57,6 +57,13 @@ func Credits() error {
 	d := ac.NewDistBuilder().
 		DistDir(filepath.Join(cwd, "dist")).
 		WorkDir(tmpDir).
+		ReplaceOs([][]string{
+			[]string{"linux", "Linux"},
+			[]string{"windows", "Windows"},
+		}).
+		ReplaceArch([][]string{
+			[]string{"386", "i386"},
+		}).
 		OutDir(cwd).
 		OutputBuilder(b).
 		Build()

@@ -26,6 +26,8 @@ type DistBuilder interface {
 	DistDir(string) DistBuilder
 	OutDir(string) DistBuilder
 	BaseName(string) DistBuilder
+	ReplaceOs([][]string) DistBuilder
+	ReplaceArch([][]string) DistBuilder
 	Uniq(bool) DistBuilder
 
 	OutputBuilder(OutputBuilder) DistBuilder
@@ -38,11 +40,13 @@ type DistBuilder interface {
 }
 
 type baseDistBuilder struct {
-	workDir  string
-	distDir  string
-	outDir   string
-	baseName string
-	uniq     bool
+	workDir     string
+	distDir     string
+	outDir      string
+	baseName    string
+	replaceOs   [][]string
+	replaceArch [][]string
+	uniq        bool
 
 	outputBuilder OutputBuilder
 
@@ -71,6 +75,18 @@ func (b *baseDistBuilder) OutDir(outDir string) DistBuilder {
 func (b *baseDistBuilder) BaseName(baseName string) DistBuilder {
 	bb := b.branch()
 	b.baseName = baseName
+	return bb
+}
+
+func (b *baseDistBuilder) ReplaceOs(replaceOs [][]string) DistBuilder {
+	bb := b.branch()
+	b.replaceOs = replaceOs
+	return bb
+}
+
+func (b *baseDistBuilder) ReplaceArch(replaceArch [][]string) DistBuilder {
+	bb := b.branch()
+	b.replaceArch = replaceArch
 	return bb
 }
 
@@ -116,11 +132,13 @@ type outputHash struct {
 }
 
 type baseDist struct {
-	workDir  string
-	distDir  string
-	outDir   string
-	baseName string
-	uniq     bool
+	workDir     string
+	distDir     string
+	outDir      string
+	baseName    string
+	replaceOs   [][]string
+	replaceArch [][]string
+	uniq        bool
 
 	outputBuilder OutputBuilder
 
@@ -135,9 +153,8 @@ type baseDist struct {
 
 func (d *baseDist) output(distName string) error {
 	s := DistSuffix(distName)
-	// TODO: support replacement like as GoReleaser.
-	pOs := s[0]
-	pArch := s[1]
+	pOs := ReplaceItem(d.replaceOs, s[0])
+	pArch := ReplaceItem(d.replaceArch, s[1])
 
 	outFileName := filepath.Join(d.outDir, d.baseName+"_"+pOs+"_"+pArch)
 	out, err := os.Create(outFileName)
@@ -203,11 +220,13 @@ func (d *baseDist) Run() error {
 
 func newBaseDist(b *baseDistBuilder) *baseDist {
 	return &baseDist{
-		workDir:  b.workDir,
-		distDir:  b.distDir,
-		outDir:   b.outDir,
-		baseName: b.baseName,
-		uniq:     b.uniq,
+		workDir:     b.workDir,
+		distDir:     b.distDir,
+		outDir:      b.outDir,
+		baseName:    b.baseName,
+		replaceOs:   b.replaceOs,
+		replaceArch: b.replaceArch,
+		uniq:        b.uniq,
 
 		outputBuilder: b.outputBuilder.Branch().
 			WorkDir(b.workDir),

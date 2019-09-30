@@ -24,11 +24,11 @@ func Test_baseDist_Run_With_Func(t *testing.T) {
 	workDir := filepath.Join(testDir, "work_dist")
 	goSumDir := filepath.Join(testDir, "goSum")
 	tests := []struct {
-		name           string
-		builder        DistBuilder
-		fakeRunFunc    runFuncType
-		wantNumFOutput int
-		wantErr        bool
+		name        string
+		builder     DistBuilder
+		fakeRunFunc runFuncType
+		wantFiles   []string
+		wantErr     bool
 	}{
 		{
 			name: "basic",
@@ -41,7 +41,7 @@ func Test_baseDist_Run_With_Func(t *testing.T) {
 				_, err := io.Copy(outStream, strings.NewReader("test"))
 				return err
 			},
-			wantNumFOutput: 1,
+			wantFiles: []string{"CREDITS"},
 		}, {
 			name: "multiple",
 			builder: NewDistBuilder().
@@ -58,7 +58,31 @@ func Test_baseDist_Run_With_Func(t *testing.T) {
 				_, err = io.CopyN(outStream, f, 2048*5)
 				return err
 			},
-			wantNumFOutput: 2,
+			wantFiles: []string{"CREDITS_linux_386", "CREDITS_linux_amd64"},
+		}, {
+			name: "replace",
+			builder: NewDistBuilder().
+				DistDir(distDir).
+				OutDir(outDir).
+				ReplaceOs([][]string{
+					[]string{"linux", "Linux"},
+					[]string{"windows", "Windows"},
+				}).
+				ReplaceArch([][]string{
+					[]string{"386", "i386"},
+				}).
+				WorkDir(workDir),
+			fakeRunFunc: func(argv []string, outStream, errStream io.Writer) error {
+				// different output.
+				f, err := os.Open("/dev/random")
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = io.CopyN(outStream, f, 2048*5)
+				return err
+			},
+			wantFiles: []string{"CREDITS_Linux_i386", "CREDITS_Linux_amd64"},
 		},
 	}
 	for _, tt := range tests {
@@ -84,7 +108,11 @@ func Test_baseDist_Run_With_Func(t *testing.T) {
 			}
 			files, err := ioutil.ReadDir(outDir)
 			assert.Nil(t, err, "check")
-			assert.Equal(t, len(files), tt.wantNumFOutput, "Num of output files")
+			gotFileNames := make([]string, len(files))
+			for i, f := range files {
+				gotFileNames[i] = f.Name()
+			}
+			assert.ElementsMatch(t, tt.wantFiles, gotFileNames, "files")
 		})
 	}
 }

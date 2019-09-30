@@ -24,3 +24,13 @@ func DistSuffix(d string) []string {
 	s := strings.Split(d, "_")
 	return s[len(s)-2:]
 }
+
+// ReplaceItem replaces s by r.
+func ReplaceItem(r [][]string, s string) string {
+	for _, r := range r {
+		if r[0] == s {
+			return r[1]
+		}
+	}
+	return s
+}

@@ -95,3 +95,43 @@ func TestDistSuffix(t *testing.T) {
 		})
 	}
 }
+
+func TestReplaceItem(t *testing.T) {
+	type args struct {
+		r [][]string
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "basic",
+			args: args{
+				r: [][]string{
+					[]string{"linx", "Linux"},
+					[]string{"windows", "Windows"},
+				},
+				s: "windows",
+			},
+			want: "Windows",
+		}, {
+			name: "no match",
+			args: args{
+				r: [][]string{
+					[]string{"linx", "Linux"},
+					[]string{"windows", "Windows"},
+				},
+				s: "aix",
+			},
+			want: "aix",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ReplaceItem(tt.args.r, tt.args.s)
+			assert.Equal(t, tt.want, got, "ReplaceItem()")
+		})
+	}
+}

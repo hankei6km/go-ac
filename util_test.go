@@ -83,9 +83,16 @@ func TestDistSuffix(t *testing.T) {
 		{
 			name: "basic",
 			args: args{
-				d: "foo_bar_linux_386",
+				d: "linux_386",
 			},
 			want: []string{"linux", "386"},
+		},
+		{
+			name: "sufix v1",
+			args: args{
+				d: "linux_amd64_v1",
+			},
+			want: []string{"linux", "amd64_v1"},
 		},
 	}
 	for _, tt := range tests {

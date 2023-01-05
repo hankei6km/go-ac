@@ -58,7 +58,7 @@ func Test_baseDist_Run_With_Func(t *testing.T) {
 				_, err = io.CopyN(outStream, f, 2048*5)
 				return err
 			},
-			wantFiles: []string{"CREDITS_linux_386", "CREDITS_linux_amd64"},
+			wantFiles: []string{"CREDITS_linux_386", "CREDITS_linux_amd64", "CREDITS_linux_amd64_v1"},
 		}, {
 			name: "replace",
 			builder: NewDistBuilder().
@@ -82,7 +82,7 @@ func Test_baseDist_Run_With_Func(t *testing.T) {
 				_, err = io.CopyN(outStream, f, 2048*5)
 				return err
 			},
-			wantFiles: []string{"CREDITS_Linux_i386", "CREDITS_Linux_amd64"},
+			wantFiles: []string{"CREDITS_Linux_i386", "CREDITS_Linux_amd64", "CREDITS_Linux_amd64_v1"},
 		},
 	}
 	for _, tt := range tests {
@@ -154,7 +154,7 @@ echo test
 # different output.
 dd if=/dev/random count=5 status=none
 `,
-			wantNumFOutput: 2,
+			wantNumFOutput: 3,
 		},
 	}
 	for _, tt := range tests {

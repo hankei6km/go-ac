@@ -19,10 +19,13 @@ func ResetDir(name string, perm os.FileMode) error {
 	return os.Mkdir(name, perm)
 }
 
-// DistSuffix returns suffix  of d(ie. foo_bar_linxu_386 -> [linx 386])
+// DistSuffix returns suffix of d(ie. linux_386 -> [linux 386], linux_amd64_v1 -> [linux amd64_v1])
 func DistSuffix(d string) []string {
 	s := strings.Split(d, "_")
-	return s[len(s)-2:]
+	if len(s) < 2 {
+		return s
+	}
+	return []string{s[0], strings.Join(s[1:], "_")}
 }
 
 // ReplaceItem replaces s by r.

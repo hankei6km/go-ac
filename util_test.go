@@ -94,6 +94,13 @@ func TestDistSuffix(t *testing.T) {
 			},
 			want: []string{"linux", "amd64_v1"},
 		},
+		{
+			name: "sufix v1 with prefix",
+			args: args{
+				d: "foo_linux_amd64_v1",
+			},
+			want: []string{"linux", "amd64_v1"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
